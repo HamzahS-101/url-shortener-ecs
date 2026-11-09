@@ -1,0 +1,39 @@
+# Secrets / env
+.env
+.env.*
+!.env.example
+*.pem
+
+# OS
+.DS_Store
+
+# Python
+__pycache__/
+.venv/
+*.pyc
+.pytest_cache/
+coverage/
+.coverage
+
+# Logs
+*.log
+*.out
+
+# Terraform
+**/.terraform/*
+*.tfstate
+*.tfstate.*
+.terraform.tfstate.lock.info
+*.tfvars
+*.tfvars.json
+!*.tfvars.example
+crash.log
+crash.*.log
+override.tf
+override.tf.json
+*_override.tf
+*_override.tf.json
+.terraformrc
+terraform.rc
+*tfplan*
+.plan
