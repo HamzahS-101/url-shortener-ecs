@@ -1,4 +1,4 @@
-FROM golang:1.27.3-alpine3.24 AS builder
+FROM golang:1.27.3-trixie AS builder
 
 WORKDIR /build
 COPY go.mod go.sum ./
