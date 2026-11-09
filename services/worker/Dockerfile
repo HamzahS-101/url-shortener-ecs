@@ -17,6 +17,7 @@ COPY --from=builder /worker /usr/local/bin/worker
 USER 10001:10001
 EXPOSE 8090
 
+# Local health check only, ECS ignores this and uses the task definition's health check
 HEALTHCHECK --interval=30s --timeout=3s --start-period=30s --retries=3 \
   CMD ["wget", "-qO-", "http://localhost:8090/healthz"]
 
