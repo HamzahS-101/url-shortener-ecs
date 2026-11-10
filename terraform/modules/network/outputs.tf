@@ -22,3 +22,8 @@ output "private_route_table_id" {
   value       = aws_route_table.private_route_table.id
   description = "ID of the private route table, used by the S3 gateway endpoint."
 }
+
+output "security_group_ids" {
+  value       = { for name, sg in aws_security_group.sg : name => sg.id }
+  description = "Security group IDs keyed by name (alb, api, dashboard, worker, rds)."
+}

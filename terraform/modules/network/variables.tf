@@ -22,3 +22,13 @@ variable "data_subnet_cidrs" {
   type        = map(string)
   description = "CIDR blocks for the data subnets, keyed by availability zone."
 }
+
+variable "api_port" {
+  type        = number
+  description = "Port the API container listens on."
+}
+
+variable "dashboard_port" {
+  type        = number
+  description = "Port the dashboard container listens on."
+}

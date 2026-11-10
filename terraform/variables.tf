@@ -58,3 +58,31 @@ variable "data_subnet_cidrs" {
     "eu-west-2b" = "10.0.22.0/24"
   }
 }
+
+# Services
+
+variable "api_port" {
+  type        = number
+  description = "Port the API container listens on."
+  default     = 8080
+}
+
+variable "dashboard_port" {
+  type        = number
+  description = "Port the dashboard container listens on."
+  default     = 8081
+}
+
+# Route53
+
+variable "hosted_zone_name" {
+  type        = string
+  description = "Name of the Route53 hosted zone, created manually."
+  default     = "url.hamzahsahal.com"
+}
+
+variable "domain_name" {
+  type        = string
+  description = "Domain the API is served on. The dashboard uses dashboard.<domain_name>."
+  default     = "url.hamzahsahal.com"
+}
