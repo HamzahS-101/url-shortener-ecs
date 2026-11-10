@@ -1,5 +1,5 @@
-module github.com/CoderCo-Learning/url-shortener/services/worker
+module github.com/HamzahS-101/url-shortener-ecs/services/worker
 
-go 1.23
+go 1.27
 
-require github.com/lib/pq v1.10.9
+require github.com/lib/pq v1.12.3
