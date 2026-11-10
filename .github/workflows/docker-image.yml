@@ -25,7 +25,7 @@ env:
 jobs:
   build:
     name: ${{ matrix.service }}
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04-arm
     # Runs this job once per service, in parallel, instead of repeating the steps three times
     strategy:
       fail-fast: false
@@ -71,3 +71,12 @@ jobs:
       - name: Push image
         if: github.ref == 'refs/heads/main' && github.event_name != 'pull_request'
         run: docker push "$IMAGE"
+
+      - name: Store image tag in SSM
+        if: github.ref == 'refs/heads/main' && github.event_name != 'pull_request'
+        run: |
+          aws ssm put-parameter \
+            --name "/url-shortener/${{ matrix.service }}/image-tag" \
+            --value "${{ github.sha }}" \
+            --type String \
+            --overwrite
