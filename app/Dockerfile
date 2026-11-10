@@ -11,6 +11,9 @@ WORKDIR /app
 COPY --from=builder /install /usr/local
 COPY src/ ./src/
 
+# Removed because Trivy flagged high vulnerabilities in pip's bundled libraries, and the app doesn't need pip at runtime
+RUN pip uninstall -y pip
+
 USER 10001:10001
 EXPOSE 8080
 
