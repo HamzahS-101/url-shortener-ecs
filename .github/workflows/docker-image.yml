@@ -1,0 +1,73 @@
+name: Docker build, scan and push to ECR
+
+on:
+  pull_request:
+    paths:
+      - "app/**"
+      - "services/**"
+      - ".github/workflows/docker-image.yml"
+  push:
+    branches: [main]
+    paths:
+      - "app/**"
+      - "services/**"
+      - ".github/workflows/docker-image.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  id-token: write
+
+env:
+  AWS_REGION: eu-west-2
+  AWS_ROLE_ARN: arn:aws:iam::188735374190:role/url-shortener-github-actions
+
+jobs:
+  build:
+    name: ${{ matrix.service }}
+    runs-on: ubuntu-latest
+    # Runs this job once per service, in parallel, instead of repeating the steps three times
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - service: api
+            context: app
+          - service: worker
+            context: services/worker
+          - service: dashboard
+            context: services/dashboard
+
+    env:
+      IMAGE: 188735374190.dkr.ecr.eu-west-2.amazonaws.com/url-shortener-${{ matrix.service }}:${{ github.sha }}
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7.0.1
+
+      - name: Build image
+        run: docker build -t "$IMAGE" ${{ matrix.context }}
+
+      - name: Scan for fixable critical vulnerabilities
+        uses: aquasecurity/trivy-action@v0.36.0
+        with:
+          image-ref: ${{ env.IMAGE }}
+          severity: CRITICAL
+          ignore-unfixed: true
+          format: table
+          exit-code: "1"
+
+      - name: Configure AWS credentials
+        if: github.ref == 'refs/heads/main' && github.event_name != 'pull_request'
+        uses: aws-actions/configure-aws-credentials@v6.3.0
+        with:
+          role-to-assume: ${{ env.AWS_ROLE_ARN }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Log in to ECR
+        if: github.ref == 'refs/heads/main' && github.event_name != 'pull_request'
+        uses: aws-actions/amazon-ecr-login@v2.1.7
+
+      - name: Push image
+        if: github.ref == 'refs/heads/main' && github.event_name != 'pull_request'
+        run: docker push "$IMAGE"
