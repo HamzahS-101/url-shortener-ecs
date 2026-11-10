@@ -33,3 +33,16 @@ module "alb" {
   dashboard_port    = var.dashboard_port
   waf_rate_limit    = var.waf_rate_limit
 }
+
+module "database" {
+  source = "./modules/database"
+
+  project_name         = var.project_name
+  data_subnet_ids      = module.network.data_subnet_ids
+  rds_sg_id            = module.network.security_group_ids["rds"]
+  db_engine_version    = var.db_engine_version
+  db_instance_class    = var.db_instance_class
+  db_allocated_storage = var.db_allocated_storage
+  db_name              = var.db_name
+  db_username          = var.db_username
+}

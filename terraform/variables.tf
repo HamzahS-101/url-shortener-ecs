@@ -94,3 +94,35 @@ variable "waf_rate_limit" {
   description = "Maximum requests per IP in a 5-minute window before WAF blocks it."
   default     = 100
 }
+
+# Database
+
+variable "db_engine_version" {
+  type        = string
+  description = "PostgreSQL major version (matches postgres:16 in docker-compose)."
+  default     = "16"
+}
+
+variable "db_instance_class" {
+  type        = string
+  description = "RDS instance class (Graviton, smallest available)."
+  default     = "db.t4g.micro"
+}
+
+variable "db_allocated_storage" {
+  type        = number
+  description = "Allocated storage in GB (20 is the gp3 minimum)."
+  default     = 20
+}
+
+variable "db_name" {
+  type        = string
+  description = "Name of the database created on the instance."
+  default     = "shortener"
+}
+
+variable "db_username" {
+  type        = string
+  description = "Master username for the database."
+  default     = "app"
+}
