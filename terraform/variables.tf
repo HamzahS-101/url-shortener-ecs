@@ -86,3 +86,11 @@ variable "domain_name" {
   description = "Domain the API is served on. The dashboard uses dashboard.<domain_name>."
   default     = "url.hamzahsahal.com"
 }
+
+# WAF
+
+variable "waf_rate_limit" {
+  type        = number
+  description = "Maximum requests per IP in a 5-minute window before WAF blocks it."
+  default     = 100
+}

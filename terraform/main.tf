@@ -31,4 +31,5 @@ module "alb" {
   domain_name       = var.domain_name
   api_port          = var.api_port
   dashboard_port    = var.dashboard_port
+  waf_rate_limit    = var.waf_rate_limit
 }

@@ -37,3 +37,8 @@ variable "dashboard_port" {
   type        = number
   description = "Port the dashboard container listens on."
 }
+
+variable "waf_rate_limit" {
+  type        = number
+  description = "Maximum requests per IP in a 5-minute window before WAF blocks it."
+}
