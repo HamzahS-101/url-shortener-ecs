@@ -37,3 +37,16 @@ resource "aws_acm_certificate_validation" "cert_validation" {
   certificate_arn         = aws_acm_certificate.cert.arn
   validation_record_fqdns = [for record in aws_route53_record.cert_validation_record : record.fqdn]
 }
+
+resource "aws_route53_record" "alias_record" {
+  for_each = toset([var.domain_name, "dashboard.${var.domain_name}"])
+  zone_id  = data.aws_route53_zone.zone.zone_id
+  name     = each.value
+  type     = "A"
+
+  alias {
+    name                   = var.alb_dns_name
+    zone_id                = var.alb_zone_id
+    evaluate_target_health = true
+  }
+}

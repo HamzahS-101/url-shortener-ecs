@@ -16,4 +16,19 @@ module "route53" {
   project_name     = var.project_name
   hosted_zone_name = var.hosted_zone_name
   domain_name      = var.domain_name
+  alb_dns_name     = module.alb.alb_dns_name
+  alb_zone_id      = module.alb.alb_zone_id
+}
+
+module "alb" {
+  source = "./modules/alb"
+
+  project_name      = var.project_name
+  vpc_id            = module.network.vpc_id
+  public_subnet_ids = module.network.public_subnet_ids
+  alb_sg_id         = module.network.security_group_ids["alb"]
+  certificate_arn   = module.route53.certificate_arn
+  domain_name       = var.domain_name
+  api_port          = var.api_port
+  dashboard_port    = var.dashboard_port
 }
