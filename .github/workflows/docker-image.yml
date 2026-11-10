@@ -46,7 +46,7 @@ jobs:
         uses: actions/checkout@v7.0.1
 
       - name: Build image
-        run: docker build -t "$IMAGE" ${{ matrix.context }}
+        run: docker build --provenance=false -t "$IMAGE" ${{ matrix.context }}
 
       - name: Scan for fixable critical vulnerabilities
         uses: aquasecurity/trivy-action@v0.36.0
