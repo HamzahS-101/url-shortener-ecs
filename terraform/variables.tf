@@ -6,6 +6,12 @@ variable "region" {
   default     = "eu-west-2"
 }
 
+variable "account_id" {
+  type        = string
+  description = "AWS account ID the resources are deployed to."
+  default     = "188735374190"
+}
+
 variable "project_name" {
   type        = string
   description = "Project name, used as a prefix for resource names and in tags."

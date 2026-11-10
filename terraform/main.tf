@@ -46,3 +46,19 @@ module "database" {
   db_name              = var.db_name
   db_username          = var.db_username
 }
+
+module "sqs" {
+  source = "./modules/sqs"
+
+  project_name = var.project_name
+}
+
+module "iam" {
+  source = "./modules/iam"
+
+  project_name            = var.project_name
+  account_id              = var.account_id
+  region                  = var.region
+  database_url_secret_arn = module.database.database_url_secret_arn
+  queue_arn               = module.sqs.queue_arn
+}
