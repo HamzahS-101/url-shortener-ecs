@@ -32,3 +32,8 @@ variable "dashboard_port" {
   type        = number
   description = "Port the dashboard container listens on."
 }
+
+variable "region" {
+  type        = string
+  description = "AWS region, used to build VPC endpoint service names."
+}

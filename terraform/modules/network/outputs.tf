@@ -11,6 +11,7 @@ output "public_subnet_ids" {
 output "app_subnet_ids" {
   value       = [for subnet in aws_subnet.app_subnet : subnet.id]
   description = "IDs of the app subnets."
+  depends_on  = [aws_vpc_endpoint.interface, aws_vpc_endpoint.s3]
 }
 
 output "data_subnet_ids" {
