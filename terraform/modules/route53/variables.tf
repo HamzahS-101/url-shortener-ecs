@@ -5,12 +5,12 @@ variable "project_name" {
 
 variable "hosted_zone_name" {
   type        = string
-  description = "Name of the existing Route53 hosted zone (e.g., url.example.com)."
+  description = "Name of the existing Route53 hosted zone."
 }
 
 variable "domain_name" {
   type        = string
-  description = "Domain for the ACM certificate. A wildcard for its subdomains is added automatically."
+  description = "Domain for the ACM certificate."
 }
 
 variable "alb_dns_name" {

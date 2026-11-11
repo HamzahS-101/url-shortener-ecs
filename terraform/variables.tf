@@ -8,7 +8,7 @@ variable "region" {
 
 variable "account_id" {
   type        = string
-  description = "AWS account ID the resources are deployed to."
+  description = "AWS account ID, used to build resource ARNs and URLs."
   default     = "188735374190"
 }
 
@@ -79,6 +79,22 @@ variable "dashboard_port" {
   default     = 8081
 }
 
+variable "desired_count" {
+  type        = number
+  description = "Number of tasks to run per service."
+  default     = 2
+}
+
+variable "task_sizes" {
+  type        = map(object({ cpu = number, memory = number }))
+  description = "Fargate CPU and memory per service."
+  default = {
+    api       = { cpu = 256, memory = 512 }
+    worker    = { cpu = 256, memory = 512 }
+    dashboard = { cpu = 256, memory = 512 }
+  }
+}
+
 # Route53
 
 variable "hosted_zone_name" {
@@ -105,19 +121,19 @@ variable "waf_rate_limit" {
 
 variable "db_engine_version" {
   type        = string
-  description = "PostgreSQL major version (matches postgres:16 in docker-compose)."
+  description = "PostgreSQL major version"
   default     = "16"
 }
 
 variable "db_instance_class" {
   type        = string
-  description = "RDS instance class (Graviton, smallest available)."
+  description = "RDS instance class"
   default     = "db.t4g.micro"
 }
 
 variable "db_allocated_storage" {
   type        = number
-  description = "Allocated storage in GB (20 is the gp3 minimum)."
+  description = "Allocated storage in GB"
   default     = 20
 }
 

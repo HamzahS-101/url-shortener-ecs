@@ -25,7 +25,7 @@ variable "certificate_arn" {
 
 variable "domain_name" {
   type        = string
-  description = "Domain the API is served on. The dashboard uses dashboard.<domain_name>."
+  description = "Domain the API is served on."
 }
 
 variable "api_port" {

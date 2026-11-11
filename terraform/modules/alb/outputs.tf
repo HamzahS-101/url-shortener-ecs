@@ -5,17 +5,18 @@ output "alb_dns_name" {
 
 output "alb_zone_id" {
   value       = aws_lb.alb.zone_id
-  description = "Hosted zone ID of the ALB, used for Route53 alias records."
+  description = "Hosted zone ID of the ALB."
 }
 
 output "alb_arn" {
   value       = aws_lb.alb.arn
-  description = "ARN of the ALB, used to attach the WAF web ACL."
+  description = "ARN of the ALB."
 }
 
 output "target_group_arns" {
   value       = { for name, tg in aws_lb_target_group.target_group : name => tg.arn }
-  description = "Target group ARNs keyed by service name (api, dashboard)."
+  description = "Target group ARNs keyed by service name."
+  depends_on  = [aws_lb_listener_rule.host_rule]
 }
 
 output "https_listener_arn" {

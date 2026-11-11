@@ -62,3 +62,24 @@ module "iam" {
   database_url_secret_arn = module.database.database_url_secret_arn
   queue_arn               = module.sqs.queue_arn
 }
+
+module "ecs" {
+  source = "./modules/ecs"
+
+  project_name            = var.project_name
+  account_id              = var.account_id
+  region                  = var.region
+  api_port                = var.api_port
+  dashboard_port          = var.dashboard_port
+  domain_name             = var.domain_name
+  desired_count           = var.desired_count
+  task_sizes              = var.task_sizes
+  subnet_ids              = module.network.public_subnet_ids
+  assign_public_ip        = true
+  security_group_ids      = module.network.security_group_ids
+  target_group_arns       = module.alb.target_group_arns
+  execution_role_arn      = module.iam.execution_role_arn
+  task_role_arns          = module.iam.task_role_arns
+  database_url_secret_arn = module.database.database_url_secret_arn
+  queue_url               = module.sqs.queue_url
+}
