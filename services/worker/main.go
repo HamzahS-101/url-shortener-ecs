@@ -55,13 +55,15 @@ func main() {
 	go func() {
 		mux := http.NewServeMux()
 		mux.HandleFunc("/healthz", func(w http.ResponseWriter, r *http.Request) {
-			status := "ok"
-			if err := db.Ping(); err != nil {
-				status = "unhealthy"
-				w.WriteHeader(http.StatusServiceUnavailable)
+			dbStatus := "ok"
+			pingCtx, cancel := context.WithTimeout(r.Context(), 2*time.Second)
+			defer cancel()
+			if err := db.PingContext(pingCtx); err != nil {
+				dbStatus = "unreachable"
+				log.Printf("Health check: database unreachable: %v", err)
 			}
 			w.Header().Set("Content-Type", "application/json")
-			json.NewEncoder(w).Encode(map[string]string{"status": status, "service": "worker"})
+			json.NewEncoder(w).Encode(map[string]string{"status": "ok", "database": dbStatus, "service": "worker"})
 		})
 		port := getEnv("HEALTH_PORT", "8090")
 		log.Printf("Worker health check on :%s", port)
