@@ -21,6 +21,7 @@ coverage/
 
 # Terraform
 **/.terraform/*
+terraform/modules/**/.terraform.lock.hcl
 *.tfstate
 *.tfstate.*
 .terraform.tfstate.lock.info
