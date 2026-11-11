@@ -63,11 +63,6 @@ variable "subnet_ids" {
   description = "Subnet IDs to run the tasks in."
 }
 
-variable "assign_public_ip" {
-  type        = bool
-  description = "Whether tasks get a public IP."
-}
-
 variable "security_group_ids" {
   type        = map(string)
   description = "Security group IDs keyed by service name."

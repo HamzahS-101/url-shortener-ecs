@@ -2,6 +2,7 @@ module "network" {
   source = "./modules/network"
 
   project_name        = var.project_name
+  region              = var.region
   vpc_cidr            = var.vpc_cidr
   public_subnet_cidrs = var.public_subnet_cidrs
   app_subnet_cidrs    = var.app_subnet_cidrs
@@ -74,8 +75,7 @@ module "ecs" {
   domain_name             = var.domain_name
   desired_count           = var.desired_count
   task_sizes              = var.task_sizes
-  subnet_ids              = module.network.public_subnet_ids
-  assign_public_ip        = true
+  subnet_ids              = module.network.app_subnet_ids
   security_group_ids      = module.network.security_group_ids
   target_group_arns       = module.alb.target_group_arns
   execution_role_arn      = module.iam.execution_role_arn
