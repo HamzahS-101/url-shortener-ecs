@@ -192,8 +192,14 @@ func processClickEvent(raw string) error {
 		clickedAt = time.Now().UTC()
 	}
 
+	tx, err := db.Begin()
+	if err != nil {
+		return err
+	}
+	defer tx.Rollback()
+
 	// Insert raw click event
-	_, err = db.Exec(
+	_, err = tx.Exec(
 		`INSERT INTO click_events (short_code, ip_address, user_agent, referer, clicked_at)
 		 VALUES ($1, $2, $3, $4, $5)`,
 		event.ShortCode, event.IP, event.UserAgent, event.Referer, clickedAt,
@@ -204,15 +210,24 @@ func processClickEvent(raw string) error {
 
 	// Update hourly aggregation
 	hour := clickedAt.Truncate(time.Hour)
-	_, err = db.Exec(
+	_, err = tx.Exec(
 		`INSERT INTO click_stats_hourly (short_code, hour, clicks, unique_ips)
 		 VALUES ($1, $2, 1, 1)
 		 ON CONFLICT (short_code, hour)
 		 DO UPDATE SET clicks = click_stats_hourly.clicks + 1`,
 		event.ShortCode, hour,
 	)
+	if err != nil {
+		return err
+	}
 
-	return err
+	// Update total click count
+	_, err = tx.Exec(`UPDATE urls SET clicks = clicks + 1 WHERE id = $1`, event.ShortCode)
+	if err != nil {
+		return err
+	}
+
+	return tx.Commit()
 }
 
 func getEnv(key, fallback string) string {
