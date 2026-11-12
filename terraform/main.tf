@@ -92,4 +92,5 @@ module "ecs" {
   task_role_arns          = module.iam.task_role_arns
   database_url_secret_arn = module.database.database_url_secret_arn
   queue_url               = module.sqs.queue_url
+  redis_url               = module.cache.redis_url
 }

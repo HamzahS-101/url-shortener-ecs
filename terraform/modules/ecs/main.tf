@@ -7,6 +7,7 @@ locals {
       environment = [
         { name = "SQS_QUEUE_URL", value = var.queue_url },
         { name = "BASE_URL", value = "https://${var.domain_name}" },
+        { name = "REDIS_URL", value = var.redis_url },
       ]
     }
     worker = {
