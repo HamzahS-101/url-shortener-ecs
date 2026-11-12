@@ -7,6 +7,7 @@ locals {
     worker    = "Worker tasks"
     rds       = "PostgreSQL from the app tasks only"
     endpoints = "HTTPS to VPC interface endpoints from the app tasks"
+    redis     = "Redis from the API tasks only"
   }
 
   # Inbound rules: sg allows port from a cidr or a source security group
@@ -21,6 +22,7 @@ locals {
     endpoints_from_api       = { sg = "endpoints", port = 443, source = "api" }
     endpoints_from_dashboard = { sg = "endpoints", port = 443, source = "dashboard" }
     endpoints_from_worker    = { sg = "endpoints", port = 443, source = "worker" }
+    redis_from_api           = { sg = "redis", port = 6379, source = "api" }
   }
 
   # Outbound rules: sg allows port to a cidr, a destination security group or a prefix list
@@ -36,6 +38,7 @@ locals {
     api_to_rds             = { sg = "api", port = 5432, destination = "rds" }
     dashboard_to_rds       = { sg = "dashboard", port = 5432, destination = "rds" }
     worker_to_rds          = { sg = "worker", port = 5432, destination = "rds" }
+    api_to_redis           = { sg = "api", port = 6379, destination = "redis" }
   }
 }
 
