@@ -1,0 +1,613 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Click stats</title>
+  <style>
+    :root {
+      --band: #0f2a52;
+      --band-text: #ffffff;
+      --band-muted: #b9c7e0;
+      --bg: #f3f6fb;
+      --surface: #ffffff;
+      --text: #16202e;
+      --muted: #5a6678;
+      --border: #d6deea;
+      --accent: #2452b8;
+      --accent-soft: #e8eefa;
+      --error: #b42318;
+      --radius: 10px;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      background: var(--bg);
+      color: var(--text);
+      font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+      line-height: 1.5;
+    }
+    .container {
+      max-width: 64rem;
+      margin: 0 auto;
+      padding: 0 1rem;
+    }
+    .band {
+      background: var(--band);
+      color: var(--band-text);
+      padding: 3rem 0 2.5rem;
+      margin-bottom: 2.5rem;
+    }
+    main { padding-bottom: 4rem; }
+    .band-top {
+      display: flex;
+      justify-content: space-between;
+      align-items: baseline;
+      gap: 1rem;
+      flex-wrap: wrap;
+      margin-bottom: 2rem;
+    }
+    h1 {
+      font-size: 1.75rem;
+      font-weight: 650;
+      letter-spacing: -0.01em;
+      margin: 0;
+    }
+    h2 {
+      font-size: 1.1rem;
+      font-weight: 650;
+      margin: 0 0 0.75rem;
+    }
+    a { color: var(--accent); }
+    a:focus-visible {
+      outline: 2px solid var(--accent);
+      outline-offset: 2px;
+    }
+    .updated {
+      color: var(--band-muted);
+      font-size: 0.9rem;
+    }
+    .totals {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 1rem 3.5rem;
+      margin: 0;
+    }
+    .totals dt {
+      color: var(--band-muted);
+      font-size: 0.9rem;
+    }
+    .totals dd {
+      margin: 0;
+      font-size: 2.25rem;
+      font-weight: 700;
+      font-variant-numeric: tabular-nums;
+    }
+    section { margin-bottom: 2.5rem; }
+    .table-wrap {
+      overflow-x: auto;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 0.95rem;
+    }
+    th, td {
+      text-align: left;
+      padding: 0.6rem 0.85rem;
+      vertical-align: top;
+    }
+    th {
+      color: var(--muted);
+      font-weight: 600;
+      font-size: 0.85rem;
+      background: var(--accent-soft);
+      border-bottom: 1px solid var(--border);
+    }
+    tbody tr + tr td { border-top: 1px solid var(--border); }
+    tbody tr:hover td { background: #f8faff; }
+    td.num, th.num {
+      text-align: right;
+      font-variant-numeric: tabular-nums;
+    }
+    td.url {
+      max-width: 28rem;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+    td.agent {
+      color: var(--muted);
+      max-width: 22rem;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+    td.time { white-space: nowrap; }
+    code { font-size: 0.9rem; }
+    .empty {
+      color: var(--muted);
+      padding: 1rem 0.85rem;
+      margin: 0;
+    }
+    .error {
+      color: var(--error);
+      margin: 0 0 1.5rem;
+    }
+    .error[hidden] { display: none; }
+
+    .code-btn {
+      font: inherit;
+      color: var(--accent);
+      background: none;
+      border: 0;
+      padding: 0;
+      cursor: pointer;
+      text-decoration: underline;
+      text-underline-offset: 2px;
+    }
+    .code-btn:focus-visible, .close:focus-visible, .bar:focus-visible, summary:focus-visible {
+      outline: 2px solid var(--accent);
+      outline-offset: 2px;
+    }
+
+    dialog {
+      width: min(46rem, calc(100vw - 2rem));
+      max-height: calc(100vh - 2rem);
+      border: 0;
+      border-radius: var(--radius);
+      padding: 0;
+      color: var(--text);
+      background: var(--surface);
+      box-shadow: 0 20px 50px rgba(15, 42, 82, 0.25);
+    }
+    dialog::backdrop { background: rgba(15, 42, 82, 0.45); }
+    .detail-head {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      gap: 1rem;
+      padding: 1.5rem 1.5rem 0;
+    }
+    .detail-head h2 {
+      font-family: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+      font-size: 1.6rem;
+      margin: 0;
+    }
+    .detail-url {
+      display: block;
+      margin-top: 0.25rem;
+      color: var(--muted);
+      font-size: 0.9rem;
+      word-break: break-all;
+    }
+    .close {
+      font: inherit;
+      font-weight: 600;
+      color: var(--accent);
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 0.45rem 0.9rem;
+      min-height: 44px;
+      cursor: pointer;
+    }
+    .close:hover { background: var(--accent-soft); }
+    .detail-body { padding: 1.25rem 1.5rem 1.5rem; }
+    .detail-stats {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.75rem 2.5rem;
+      margin: 0 0 1.5rem;
+    }
+    .detail-stats dt { color: var(--muted); font-size: 0.85rem; }
+    .detail-stats dd {
+      margin: 0;
+      font-size: 1.4rem;
+      font-weight: 700;
+      font-variant-numeric: tabular-nums;
+    }
+    .chart-title {
+      font-size: 0.95rem;
+      font-weight: 650;
+      margin: 0 0 0.75rem;
+    }
+    .chart {
+      position: relative;
+      display: grid;
+      grid-template-columns: 2rem 1fr;
+      gap: 0 0.5rem;
+    }
+    .y-axis {
+      position: relative;
+      height: 10rem;
+      color: var(--muted);
+      font-size: 0.75rem;
+      font-variant-numeric: tabular-nums;
+      text-align: right;
+    }
+    .y-axis span { position: absolute; right: 0; transform: translateY(-50%); }
+    .plot {
+      position: relative;
+      height: 10rem;
+      display: flex;
+      align-items: flex-end;
+      gap: 2px;
+      border-bottom: 1px solid #c3ccda;
+    }
+    .gridline {
+      position: absolute;
+      left: 0;
+      right: 0;
+      border-top: 1px solid #edf1f7;
+      pointer-events: none;
+    }
+    .slot {
+      flex: 1;
+      height: 100%;
+      display: flex;
+      align-items: flex-end;
+      justify-content: center;
+      position: relative;
+      z-index: 1;
+    }
+    .bar {
+      width: 100%;
+      max-width: 24px;
+      min-height: 0;
+      background: var(--accent);
+      border-radius: 4px 4px 0 0;
+      cursor: default;
+    }
+    .slot:hover .bar, .bar:focus-visible { background: #1d449b; }
+    .x-axis {
+      grid-column: 2;
+      display: flex;
+      gap: 2px;
+      margin-top: 0.35rem;
+      color: var(--muted);
+      font-size: 0.75rem;
+    }
+    .x-axis span { flex: 1; text-align: center; white-space: nowrap; }
+    .tooltip {
+      position: absolute;
+      z-index: 2;
+      pointer-events: none;
+      background: var(--text);
+      color: #ffffff;
+      font-size: 0.8rem;
+      padding: 0.35rem 0.55rem;
+      border-radius: 6px;
+      white-space: nowrap;
+      transform: translate(-50%, -100%);
+    }
+    .tooltip[hidden] { display: none; }
+    .chart-empty {
+      color: var(--muted);
+      margin: 0.75rem 0 0;
+    }
+    .chart-empty[hidden] { display: none; }
+    details { margin-top: 1.25rem; }
+    summary {
+      color: var(--accent);
+      cursor: pointer;
+      font-size: 0.9rem;
+      font-weight: 600;
+    }
+    details .table-wrap { margin-top: 0.75rem; }
+  </style>
+</head>
+<body>
+  <header class="band">
+    <div class="container">
+      <div class="band-top">
+        <h1>Click stats</h1>
+        <span class="updated" id="updated">Loading...</span>
+      </div>
+      <dl class="totals">
+        <div><dt>Links</dt><dd id="total-urls">-</dd></div>
+        <div><dt>Clicks</dt><dd id="total-clicks">-</dd></div>
+        <div><dt>Clicks today (UTC)</dt><dd id="clicks-today">-</dd></div>
+      </dl>
+    </div>
+  </header>
+
+  <main class="container">
+    <p class="error" id="error" role="alert" hidden>Couldn't load the latest stats. Retrying in 10 seconds.</p>
+
+    <section>
+      <h2>Most clicked</h2>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Code</th><th>URL</th><th class="num">Clicks</th></tr></thead>
+          <tbody id="top"></tbody>
+        </table>
+      </div>
+    </section>
+
+    <section>
+      <h2>Recent clicks</h2>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Time (UTC)</th><th>Code</th><th>IP</th><th>Browser</th></tr></thead>
+          <tbody id="recent"></tbody>
+        </table>
+      </div>
+    </section>
+  </main>
+
+  <dialog id="detail" aria-labelledby="detail-code">
+    <div class="detail-head">
+      <div>
+        <h2 id="detail-code"></h2>
+        <a id="detail-url" class="detail-url" target="_blank" rel="noopener"></a>
+      </div>
+      <button type="button" class="close" id="detail-close">Close</button>
+    </div>
+    <div class="detail-body">
+      <p class="error" id="detail-error" role="alert" hidden>Couldn't load this link's stats.</p>
+      <dl class="detail-stats">
+        <div><dt>Total clicks</dt><dd id="detail-total">-</dd></div>
+        <div><dt>Last 24 hours</dt><dd id="detail-24h">-</dd></div>
+        <div><dt>Created (UTC)</dt><dd id="detail-created">-</dd></div>
+      </dl>
+
+      <p class="chart-title" id="chart-title">Clicks per hour, last 24 hours (UTC)</p>
+      <div class="chart" role="group" aria-labelledby="chart-title">
+        <div class="y-axis" id="y-axis" aria-hidden="true"></div>
+        <div class="plot" id="plot"></div>
+        <div class="x-axis" id="x-axis" aria-hidden="true"></div>
+        <div class="tooltip" id="tooltip" hidden></div>
+      </div>
+      <p class="chart-empty" id="chart-empty" hidden>No clicks in the last 24 hours.</p>
+
+      <details>
+        <summary>Show as table</summary>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>Hour (UTC)</th><th class="num">Clicks</th></tr></thead>
+            <tbody id="hourly-table"></tbody>
+          </table>
+        </div>
+      </details>
+    </div>
+  </dialog>
+
+  <script>
+    const detail = document.getElementById("detail");
+    const plot = document.getElementById("plot");
+    const tooltip = document.getElementById("tooltip");
+    let openCode = null;
+
+    function cell(text, className) {
+      const td = document.createElement("td");
+      td.textContent = text;
+      if (className) td.className = className;
+      return td;
+    }
+
+    function codeCell(code) {
+      const td = document.createElement("td");
+      const button = document.createElement("button");
+      button.type = "button";
+      button.className = "code-btn";
+      button.setAttribute("aria-label", "Show hourly clicks for " + code);
+      const c = document.createElement("code");
+      c.textContent = code;
+      button.appendChild(c);
+      button.addEventListener("click", () => openDetail(code));
+      td.appendChild(button);
+      return td;
+    }
+
+    function hourLabel(date) {
+      return date.toISOString().slice(11, 16);
+    }
+
+    function niceMax(value) {
+      if (value <= 4) return 4;
+      const step = Math.pow(10, Math.floor(Math.log10(value)));
+      for (const m of [1, 2, 2.5, 5, 10]) {
+        if (m * step >= value) return m * step;
+      }
+      return value;
+    }
+
+    function renderChart(hourly) {
+      const counts = new Map();
+      for (const h of hourly) {
+        const d = new Date(h.hour);
+        if (!isNaN(d)) counts.set(d.toISOString().slice(0, 13), (counts.get(d.toISOString().slice(0, 13)) || 0) + h.clicks);
+      }
+
+      const now = new Date();
+      now.setUTCMinutes(0, 0, 0);
+      const slots = [];
+      for (let i = 23; i >= 0; i--) {
+        const start = new Date(now.getTime() - i * 3600000);
+        slots.push({ start, clicks: counts.get(start.toISOString().slice(0, 13)) || 0 });
+      }
+
+      const total = slots.reduce((sum, s) => sum + s.clicks, 0);
+      const max = niceMax(Math.max(...slots.map((s) => s.clicks)));
+      document.getElementById("detail-24h").textContent = total.toLocaleString();
+      document.getElementById("chart-empty").hidden = total > 0;
+
+      const yAxis = document.getElementById("y-axis");
+      yAxis.replaceChildren();
+      plot.replaceChildren();
+      for (const value of [max, max / 2, 0]) {
+        const pct = 100 - (value / max) * 100;
+        const label = document.createElement("span");
+        label.textContent = Number.isInteger(value) ? value : value.toFixed(1);
+        label.style.top = pct + "%";
+        yAxis.appendChild(label);
+        if (value > 0) {
+          const line = document.createElement("div");
+          line.className = "gridline";
+          line.style.top = pct + "%";
+          plot.appendChild(line);
+        }
+      }
+
+      const xAxis = document.getElementById("x-axis");
+      xAxis.replaceChildren();
+      const rows = [];
+      slots.forEach((s, i) => {
+        const end = new Date(s.start.getTime() + 3600000);
+        const text = hourLabel(s.start) + "-" + hourLabel(end) + " UTC: " + s.clicks + (s.clicks === 1 ? " click" : " clicks");
+
+        const slot = document.createElement("div");
+        slot.className = "slot";
+        const bar = document.createElement("div");
+        bar.className = "bar";
+        bar.style.height = (s.clicks / max) * 100 + "%";
+        bar.tabIndex = 0;
+        bar.setAttribute("role", "img");
+        bar.setAttribute("aria-label", text);
+        const show = () => showTooltip(slot, text);
+        slot.addEventListener("mouseenter", show);
+        slot.addEventListener("mouseleave", hideTooltip);
+        bar.addEventListener("focus", show);
+        bar.addEventListener("blur", hideTooltip);
+        slot.appendChild(bar);
+        plot.appendChild(slot);
+
+        const tick = document.createElement("span");
+        tick.textContent = i % 6 === 0 ? hourLabel(s.start) : "";
+        xAxis.appendChild(tick);
+
+        if (s.clicks > 0) {
+          const tr = document.createElement("tr");
+          tr.append(cell(hourLabel(s.start) + "-" + hourLabel(end)), cell(s.clicks.toLocaleString(), "num"));
+          rows.push(tr);
+        }
+      });
+      fill("hourly-table", rows.reverse(), 2, "No clicks in the last 24 hours.");
+    }
+
+    function showTooltip(slot, text) {
+      const chart = plot.parentElement.getBoundingClientRect();
+      const box = slot.getBoundingClientRect();
+      const bar = slot.firstChild.getBoundingClientRect();
+      tooltip.textContent = text;
+      tooltip.hidden = false;
+      const half = tooltip.offsetWidth / 2;
+      const x = Math.min(Math.max(box.left + box.width / 2 - chart.left, half), chart.width - half);
+      tooltip.style.left = x + "px";
+      tooltip.style.top = Math.min(bar.top, box.bottom - 4) - chart.top - 6 + "px";
+    }
+
+    function hideTooltip() {
+      tooltip.hidden = true;
+    }
+
+    async function loadDetail(code) {
+      try {
+        const data = await getJSON("/url/" + encodeURIComponent(code));
+        if (openCode !== code) return;
+        document.getElementById("detail-error").hidden = true;
+        const url = document.getElementById("detail-url");
+        url.textContent = data.url;
+        url.href = data.url;
+        document.getElementById("detail-total").textContent = data.total_clicks.toLocaleString();
+        document.getElementById("detail-created").textContent = formatTime(data.created_at).slice(0, 16);
+        renderChart(data.hourly);
+      } catch {
+        document.getElementById("detail-error").hidden = false;
+      }
+    }
+
+    function openDetail(code) {
+      openCode = code;
+      document.getElementById("detail-code").textContent = code;
+      for (const id of ["detail-total", "detail-24h", "detail-created"]) {
+        document.getElementById(id).textContent = "-";
+      }
+      document.getElementById("detail-url").textContent = "";
+      plot.replaceChildren();
+      document.getElementById("x-axis").replaceChildren();
+      document.getElementById("y-axis").replaceChildren();
+      hideTooltip();
+      if (!detail.open) detail.showModal();
+      loadDetail(code);
+    }
+
+    document.getElementById("detail-close").addEventListener("click", () => detail.close());
+    detail.addEventListener("click", (event) => {
+      if (event.target === detail) detail.close();
+    });
+    detail.addEventListener("close", () => {
+      openCode = null;
+      hideTooltip();
+    });
+
+    function fill(tbodyId, rows, columns, emptyText) {
+      const tbody = document.getElementById(tbodyId);
+      tbody.replaceChildren();
+      if (rows.length === 0) {
+        const tr = document.createElement("tr");
+        const td = document.createElement("td");
+        td.colSpan = columns;
+        td.className = "empty";
+        td.textContent = emptyText;
+        tr.appendChild(td);
+        tbody.appendChild(tr);
+        return;
+      }
+      for (const row of rows) tbody.appendChild(row);
+    }
+
+    function formatTime(value) {
+      const d = new Date(value);
+      if (isNaN(d)) return value;
+      return d.toISOString().slice(0, 19).replace("T", " ");
+    }
+
+    async function getJSON(path) {
+      const response = await fetch(path);
+      if (!response.ok) throw new Error(path);
+      return response.json();
+    }
+
+    async function refresh() {
+      try {
+        const [summary, top, recent] = await Promise.all([
+          getJSON("/summary"), getJSON("/top"), getJSON("/recent"),
+        ]);
+
+        document.getElementById("total-urls").textContent = summary.total_urls.toLocaleString();
+        document.getElementById("total-clicks").textContent = summary.total_clicks.toLocaleString();
+        document.getElementById("clicks-today").textContent = summary.clicks_today.toLocaleString();
+
+        fill("top", top.map((t) => {
+          const tr = document.createElement("tr");
+          tr.append(codeCell(t.short_code), cell(t.url, "url"), cell(t.clicks.toLocaleString(), "num"));
+          tr.lastChild.previousSibling.title = t.url;
+          return tr;
+        }), 3, "No links yet. Shorten one to see it here.");
+
+        fill("recent", recent.map((c) => {
+          const tr = document.createElement("tr");
+          tr.append(cell(formatTime(c.clicked_at), "time"), codeCell(c.short_code), cell(c.ip), cell(c.user_agent, "agent"));
+          tr.lastChild.title = c.user_agent;
+          return tr;
+        }), 4, "No clicks yet. Open a short link to record one.");
+
+        if (openCode) loadDetail(openCode);
+        document.getElementById("error").hidden = true;
+        document.getElementById("updated").textContent =
+          "Updated " + new Date().toLocaleTimeString();
+      } catch {
+        document.getElementById("error").hidden = false;
+      }
+    }
+
+    refresh();
+    setInterval(refresh, 10000);
+  </script>
+</body>
+</html>

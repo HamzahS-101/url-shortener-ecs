@@ -4,7 +4,7 @@ WORKDIR /build
 COPY go.mod go.sum ./
 RUN go mod download
 
-COPY *.go ./
+COPY *.go index.html ./
 # CGO off: one self-contained file that doesn't need the OS's C library, so it runs on a minimal base image
 RUN CGO_ENABLED=0 go build -o /dashboard .
 

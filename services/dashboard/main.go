@@ -2,6 +2,7 @@ package main
 
 import (
 	"database/sql"
+	_ "embed"
 	"encoding/json"
 	"log"
 	"net/http"
@@ -13,6 +14,9 @@ import (
 )
 
 var db *sql.DB
+
+//go:embed index.html
+var indexHTML []byte
 
 func main() {
 	dbURL := os.Getenv("DATABASE_URL")
@@ -32,6 +36,7 @@ func main() {
 	waitForDB()
 
 	mux := http.NewServeMux()
+	mux.HandleFunc("GET /{$}", handleIndex)
 	mux.HandleFunc("/healthz", handleHealth)
 	mux.HandleFunc("/summary", handleSummary)
 	mux.HandleFunc("/url/", handleURLStats)
@@ -41,6 +46,11 @@ func main() {
 	port := getEnv("PORT", "8081")
 	log.Printf("Dashboard API listening on :%s", port)
 	log.Fatal(http.ListenAndServe(":"+port, mux))
+}
+
+func handleIndex(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Content-Type", "text/html; charset=utf-8")
+	w.Write(indexHTML)
 }
 
 func handleHealth(w http.ResponseWriter, r *http.Request) {
