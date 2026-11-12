@@ -28,6 +28,11 @@ variable "redis_url" {
   description = "Redis connection URL for the API cache."
 }
 
+variable "trusted_proxy_cidrs" {
+  type        = list(string)
+  description = "CIDR blocks the API trusts to set X-Forwarded-For (the ALB's subnets)."
+}
+
 variable "task_role_arns" {
   type        = map(string)
   description = "Task role ARNs keyed by service name."
@@ -76,4 +81,39 @@ variable "security_group_ids" {
 variable "target_group_arns" {
   type        = map(string)
   description = "Target group ARNs keyed by service name."
+}
+
+variable "api_alternate_target_group_arn" {
+  type        = string
+  description = "ARN of the API's alternate target group for canary deployments."
+}
+
+variable "api_listener_rule_arn" {
+  type        = string
+  description = "ARN of the API's production listener rule."
+}
+
+variable "ecs_infrastructure_role_arn" {
+  type        = string
+  description = "ARN of the role ECS uses to shift ALB traffic during canary deployments."
+}
+
+variable "api_5xx_alarm_name" {
+  type        = string
+  description = "Name of the alarm that rolls back an API deployment."
+}
+
+variable "canary_percent" {
+  type        = number
+  description = "Percentage of API traffic sent to the new version during the canary phase."
+}
+
+variable "canary_bake_minutes" {
+  type        = number
+  description = "Minutes the canary runs before the rest of the traffic moves over."
+}
+
+variable "canary_final_bake_minutes" {
+  type        = number
+  description = "Minutes the old version is kept after all traffic has moved, so ECS can still roll back."
 }

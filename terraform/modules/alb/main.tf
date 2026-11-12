@@ -42,6 +42,28 @@ resource "aws_lb_target_group" "target_group" {
   }
 }
 
+resource "aws_lb_target_group" "api_alternate" {
+  name                 = "${var.project_name}-api-alt-tg"
+  port                 = var.api_port
+  protocol             = "HTTP"
+  target_type          = "ip"
+  vpc_id               = var.vpc_id
+  deregistration_delay = 30
+
+  health_check {
+    path                = "/healthz"
+    matcher             = "200"
+    interval            = 15
+    timeout             = 5
+    healthy_threshold   = 2
+    unhealthy_threshold = 3
+  }
+
+  tags = {
+    Name = "${var.project_name}-api-alt-tg"
+  }
+}
+
 resource "aws_lb_listener" "http_listener" {
   load_balancer_arn = aws_lb.alb.arn
   port              = 80
@@ -90,5 +112,9 @@ resource "aws_lb_listener_rule" "host_rule" {
     host_header {
       values = [each.value.host]
     }
+  }
+
+  lifecycle {
+    ignore_changes = [action]
   }
 }
