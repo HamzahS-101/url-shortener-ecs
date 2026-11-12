@@ -1,0 +1,428 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>URL shortener</title>
+  <style>
+    :root {
+      --band: #0f2a52;
+      --band-text: #ffffff;
+      --band-muted: #b9c7e0;
+      --band-error: #ffb4ab;
+      --bg: #f3f6fb;
+      --surface: #ffffff;
+      --text: #16202e;
+      --muted: #5a6678;
+      --faint: #9aa6b8;
+      --border: #d6deea;
+      --accent: #2452b8;
+      --accent-hover: #1d449b;
+      --accent-soft: #e8eefa;
+      --radius: 10px;
+      --mono: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      background: var(--bg);
+      color: var(--text);
+      font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+      line-height: 1.5;
+    }
+    .container {
+      max-width: 52rem;
+      margin: 0 auto;
+      padding: 0 1rem;
+    }
+    .band {
+      background: var(--band);
+      color: var(--band-text);
+      padding: 5.5rem 0 4rem;
+    }
+    h1 {
+      font-size: clamp(2.4rem, 6vw, 3.6rem);
+      font-weight: 750;
+      letter-spacing: -0.03em;
+      line-height: 1.05;
+      margin: 0 0 2.5rem;
+    }
+    h1 span { color: var(--band-muted); }
+    label {
+      display: block;
+      color: var(--band-muted);
+      font-weight: 550;
+      margin-bottom: 0.6rem;
+    }
+    .row {
+      display: flex;
+      gap: 0.6rem;
+    }
+    input {
+      flex: 1;
+      min-width: 0;
+      font: inherit;
+      font-size: 1.1rem;
+      color: var(--text);
+      background: var(--surface);
+      border: 2px solid transparent;
+      border-radius: var(--radius);
+      padding: 0.9rem 1rem;
+    }
+    input::placeholder { color: #7d889a; }
+    input:focus-visible {
+      outline: none;
+      border-color: #8fb0f0;
+    }
+    button:focus-visible, a:focus-visible {
+      outline: 2px solid #8fb0f0;
+      outline-offset: 2px;
+    }
+    button {
+      font: inherit;
+      font-weight: 650;
+      color: #ffffff;
+      background: var(--accent);
+      border: 0;
+      border-radius: var(--radius);
+      padding: 0.9rem 1.6rem;
+      min-height: 44px;
+      cursor: pointer;
+      white-space: nowrap;
+      transition: background-color 150ms ease, transform 100ms ease;
+    }
+    .band button {
+      font-size: 1.1rem;
+      background: #3b6fe0;
+    }
+    .band button:hover { background: #4a7cec; }
+    button:hover { background: var(--accent-hover); }
+    button:active { transform: translateY(1px); }
+    button:disabled { cursor: default; opacity: 0.7; }
+    .error {
+      color: var(--band-error);
+      margin: 0.75rem 0 0;
+    }
+    .error:empty { display: none; }
+
+    .stage {
+      padding: 3rem 0 1rem;
+      min-height: 13rem;
+    }
+    .stage[hidden] { display: none; }
+    .chars {
+      font-family: var(--mono);
+      font-size: 1.35rem;
+      color: var(--faint);
+      line-height: 1.6;
+      word-break: break-all;
+      min-height: 2.2rem;
+    }
+    .chars span {
+      display: inline-block;
+      width: 1ch;
+      overflow: hidden;
+      vertical-align: bottom;
+      transition: width 220ms ease, opacity 220ms ease, transform 220ms ease, color 200ms ease;
+    }
+    .chars span.gone {
+      width: 0;
+      opacity: 0;
+      transform: translateY(0.4em);
+    }
+    .chars span.keep { color: var(--text); }
+    .chars span.final {
+      color: var(--accent);
+      font-weight: 700;
+      animation: flip 260ms ease-out both;
+    }
+    .chars.done {
+      font-size: 2.6rem;
+      letter-spacing: 0.02em;
+      transition: font-size 250ms ease;
+    }
+    @keyframes flip {
+      from { transform: rotateX(90deg); opacity: 0; }
+      to { transform: rotateX(0); opacity: 1; }
+    }
+    .result {
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+      margin-top: 1.25rem;
+      flex-wrap: wrap;
+    }
+    .result[hidden] { display: none; }
+    .result.show { animation: rise 250ms ease-out; }
+    @keyframes rise {
+      from { opacity: 0; transform: translateY(6px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+    .result a {
+      color: var(--accent);
+      font-size: 1.15rem;
+      font-weight: 650;
+      word-break: break-all;
+    }
+    .secondary {
+      color: var(--accent);
+      background: var(--surface);
+      border: 1px solid var(--border);
+      padding: 0.6rem 1.1rem;
+    }
+    .secondary:hover { background: var(--accent-soft); }
+
+    .recent { margin: 2rem 0 4rem; }
+    .recent[hidden] { display: none; }
+    h2 {
+      font-size: 0.95rem;
+      font-weight: 650;
+      color: var(--muted);
+      margin: 0 0 0.6rem;
+    }
+    .recent ul {
+      list-style: none;
+      margin: 0;
+      padding: 0;
+    }
+    .recent li {
+      display: flex;
+      gap: 1rem;
+      align-items: baseline;
+      padding: 0.45rem 0;
+    }
+    .recent li + li { border-top: 1px solid var(--border); }
+    .recent a {
+      color: var(--accent);
+      font-family: var(--mono);
+      font-weight: 600;
+      white-space: nowrap;
+    }
+    .recent span {
+      color: var(--muted);
+      font-size: 0.9rem;
+      min-width: 0;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    @media (max-width: 34rem) {
+      .band { padding: 3.5rem 0 3rem; }
+      .row { flex-direction: column; }
+      .chars { font-size: 1.1rem; }
+      .chars.done { font-size: 2.1rem; }
+    }
+    @media (prefers-reduced-motion: reduce) {
+      *, *::before, *::after {
+        animation: none !important;
+        transition: none !important;
+      }
+    }
+  </style>
+</head>
+<body>
+  <header class="band">
+    <div class="container">
+      <h1>Long links,<br><span>made short.</span></h1>
+      <form id="shorten-form" novalidate>
+        <label for="url">Paste a long URL</label>
+        <div class="row">
+          <input id="url" name="url" type="url" required
+                 placeholder="https://example.com/a/very/long/path"
+                 aria-describedby="url-error" autocomplete="off">
+          <button id="submit" type="submit">Shorten</button>
+        </div>
+        <p id="url-error" class="error" role="alert"></p>
+      </form>
+    </div>
+  </header>
+
+  <main class="container">
+    <section class="stage" id="stage" hidden aria-live="polite">
+      <div class="chars" id="chars" aria-hidden="true"></div>
+      <div class="result" id="result" hidden>
+        <a id="short-link" href="#" target="_blank" rel="noopener"></a>
+        <button id="copy" type="button" class="secondary">Copy link</button>
+      </div>
+    </section>
+
+    <section class="recent" id="recent" hidden>
+      <h2>Your recent links</h2>
+      <ul id="recent-list"></ul>
+    </section>
+  </main>
+
+  <script>
+    const form = document.getElementById("shorten-form");
+    const input = document.getElementById("url");
+    const submit = document.getElementById("submit");
+    const error = document.getElementById("url-error");
+    const stage = document.getElementById("stage");
+    const chars = document.getElementById("chars");
+    const result = document.getElementById("result");
+    const shortLink = document.getElementById("short-link");
+    const copy = document.getElementById("copy");
+    const RECENT_KEY = "recent-links";
+    const CODE_LENGTH = 8;
+    const HEX = "0123456789abcdef";
+    const reducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
+
+    function loadRecent() {
+      try {
+        return JSON.parse(localStorage.getItem(RECENT_KEY)) || [];
+      } catch {
+        return [];
+      }
+    }
+
+    function saveRecent(link) {
+      const links = [link, ...loadRecent().filter((l) => l.short !== link.short)].slice(0, 5);
+      try {
+        localStorage.setItem(RECENT_KEY, JSON.stringify(links));
+      } catch {}
+      renderRecent(links);
+    }
+
+    function renderRecent(links) {
+      const list = document.getElementById("recent-list");
+      list.replaceChildren();
+      for (const link of links) {
+        const li = document.createElement("li");
+        const a = document.createElement("a");
+        a.href = link.short;
+        a.target = "_blank";
+        a.rel = "noopener";
+        a.textContent = link.short.split("/").pop();
+        const span = document.createElement("span");
+        span.textContent = link.url;
+        span.title = link.url;
+        li.append(a, span);
+        list.appendChild(li);
+      }
+      document.getElementById("recent").hidden = links.length === 0;
+    }
+
+    function showChars(text) {
+      chars.className = "chars";
+      chars.replaceChildren();
+      const spans = [];
+      for (const ch of text) {
+        const span = document.createElement("span");
+        span.textContent = ch;
+        chars.appendChild(span);
+        spans.push(span);
+      }
+      return spans;
+    }
+
+    async function collapse(spans) {
+      const order = spans.map((_, i) => i).sort(() => Math.random() - 0.5);
+      const keep = new Set(order.slice(0, CODE_LENGTH).sort((a, b) => a - b));
+      const drop = order.filter((i) => !keep.has(i));
+      const steps = 14;
+      const perStep = Math.ceil(drop.length / steps);
+      for (let i = 0; i < drop.length; i += perStep) {
+        for (const index of drop.slice(i, i + perStep)) spans[index].classList.add("gone");
+        await sleep(45);
+      }
+      const kept = [...keep].map((i) => spans[i]);
+      kept.forEach((span) => span.classList.add("keep"));
+      return kept;
+    }
+
+    async function scrambleUntil(kept, done) {
+      while (!done.value) {
+        kept.forEach((span) => { span.textContent = HEX[Math.floor(Math.random() * 16)]; });
+        await sleep(70);
+      }
+    }
+
+    async function reveal(kept, code) {
+      chars.classList.add("done");
+      for (let i = 0; i < kept.length; i++) {
+        kept[i].textContent = code[i] || "";
+        kept[i].classList.add("final");
+        await sleep(55);
+      }
+      for (const span of chars.querySelectorAll(".gone")) span.remove();
+    }
+
+    async function shorten(url) {
+      const response = await fetch("/shorten", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ url }),
+      });
+      if (!response.ok) throw new Error();
+      return response.json();
+    }
+
+    form.addEventListener("submit", async (event) => {
+      event.preventDefault();
+      error.textContent = "";
+
+      if (!input.checkValidity()) {
+        error.textContent = "Enter a full URL starting with http:// or https://";
+        input.focus();
+        return;
+      }
+
+      const url = input.value.trim();
+      submit.disabled = true;
+      submit.textContent = "Shortening";
+      result.hidden = true;
+      result.classList.remove("show");
+      stage.hidden = false;
+
+      const done = { value: false };
+      const request = shorten(url).finally(() => { done.value = true; });
+
+      try {
+        let data;
+        if (reducedMotion) {
+          data = await request;
+          showChars(data.short).forEach((span) => span.classList.add("final"));
+          chars.classList.add("done");
+        } else {
+          const spans = showChars(url.length > 90 ? url.slice(0, 90) : url);
+          await sleep(250);
+          const kept = await collapse(spans);
+          await scrambleUntil(kept, done);
+          data = await request;
+          await reveal(kept, data.short);
+        }
+
+        const shortUrl = data.short_url.startsWith("http")
+          ? data.short_url
+          : location.origin + "/" + data.short;
+
+        shortLink.textContent = shortUrl.replace(/^https?:\/\//, "");
+        shortLink.href = shortUrl;
+        copy.textContent = "Copy link";
+        result.hidden = false;
+        result.classList.add("show");
+        saveRecent({ short: shortUrl, url: data.url });
+      } catch {
+        stage.hidden = true;
+        error.textContent = "Something went wrong. Try again in a moment.";
+      } finally {
+        submit.disabled = false;
+        submit.textContent = "Shorten";
+      }
+    });
+
+    copy.addEventListener("click", async () => {
+      try {
+        await navigator.clipboard.writeText(shortLink.href);
+        copy.textContent = "Copied";
+      } catch {
+        copy.textContent = "Copy failed";
+      }
+    });
+
+    renderRecent(loadRecent());
+  </script>
+</body>
+</html>

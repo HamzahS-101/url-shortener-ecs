@@ -1,11 +1,19 @@
 from fastapi import FastAPI, HTTPException, Request
-from fastapi.responses import RedirectResponse
+from fastapi.responses import RedirectResponse, FileResponse
+from pathlib import Path
 import os, hashlib, time, json
 from .db import put_mapping, get_mapping, get_backend_type
 from .events import publish_click_event
 from .cache import get_cached_url, cache_url
 
 app = FastAPI()
+
+INDEX_HTML = Path(__file__).parent / "static" / "index.html"
+
+
+@app.get("/", include_in_schema=False)
+def index():
+    return FileResponse(INDEX_HTML)
 
 
 @app.get("/healthz")
