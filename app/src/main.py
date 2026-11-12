@@ -1,8 +1,9 @@
 from fastapi import FastAPI, HTTPException, Request
 from fastapi.responses import RedirectResponse
 import os, hashlib, time, json
-from .db import put_mapping, get_mapping, get_backend_type, increment_clicks
+from .db import put_mapping, get_mapping, get_backend_type
 from .events import publish_click_event
+from .cache import get_cached_url, cache_url
 
 app = FastAPI()
 
@@ -34,12 +35,13 @@ def stats(short_id: str):
 
 @app.get("/{short_id}")
 def resolve(short_id: str, request: Request):
-    item = get_mapping(short_id)
-    if not item:
-        raise HTTPException(404, "not found")
-
-    # Increment click count
-    increment_clicks(short_id)
+    url = get_cached_url(short_id)
+    if url is None:
+        item = get_mapping(short_id)
+        if not item:
+            raise HTTPException(404, "not found")
+        url = item["url"]
+        cache_url(short_id, url)
 
     # Publish click event to SQS for analytics processing
     publish_click_event(
@@ -49,4 +51,4 @@ def resolve(short_id: str, request: Request):
         referer=request.headers.get("referer", ""),
     )
 
-    return RedirectResponse(item["url"])
+    return RedirectResponse(url)
