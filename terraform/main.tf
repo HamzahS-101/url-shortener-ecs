@@ -48,6 +48,16 @@ module "database" {
   db_username          = var.db_username
 }
 
+module "cache" {
+  source = "./modules/cache"
+
+  project_name         = var.project_name
+  data_subnet_ids      = module.network.data_subnet_ids
+  redis_sg_id          = module.network.security_group_ids["redis"]
+  redis_engine_version = var.redis_engine_version
+  redis_node_type      = var.redis_node_type
+}
+
 module "sqs" {
   source = "./modules/sqs"
 
