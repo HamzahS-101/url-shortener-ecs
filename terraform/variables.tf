@@ -160,3 +160,39 @@ variable "db_username" {
   description = "Master username for the database."
   default     = "app"
 }
+
+variable "alert_email" {
+  type        = string
+  description = "Email address for alarm notifications. Set with TF_VAR_alert_email, not committed."
+  sensitive   = true
+}
+
+variable "api_5xx_threshold" {
+  type        = number
+  description = "API 5xx responses per minute above which the alarm fires"
+  default     = 5
+}
+
+variable "rds_free_storage_threshold_gb" {
+  type        = number
+  description = "RDS free storage in GB below which the alarm fires"
+  default     = 2
+}
+
+variable "canary_percent" {
+  type        = number
+  description = "Percentage of API traffic sent to the new version during the canary phase"
+  default     = 10
+}
+
+variable "canary_bake_minutes" {
+  type        = number
+  description = "Minutes the canary runs before the rest of the traffic moves over. Short for the demo; production would use 10-30"
+  default     = 2
+}
+
+variable "canary_final_bake_minutes" {
+  type        = number
+  description = "Minutes the old API version is kept after all traffic has moved. Short for the demo; production would use 15-60"
+  default     = 1
+}

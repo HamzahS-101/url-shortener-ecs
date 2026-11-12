@@ -95,8 +95,57 @@ resource "aws_ecs_cluster" "cluster" {
   }
 }
 
+resource "aws_ecs_service" "api" {
+  name                              = "${var.project_name}-api"
+  cluster                           = aws_ecs_cluster.cluster.id
+  task_definition                   = aws_ecs_task_definition.task_definition["api"].arn
+  desired_count                     = var.desired_count
+  launch_type                       = "FARGATE"
+  health_check_grace_period_seconds = 60
+  propagate_tags                    = "SERVICE"
+
+  network_configuration {
+    subnets          = var.subnet_ids
+    security_groups  = [var.security_group_ids["api"]]
+    assign_public_ip = false
+  }
+
+  load_balancer {
+    target_group_arn = var.target_group_arns["api"]
+    container_name   = "api"
+    container_port   = var.api_port
+
+    advanced_configuration {
+      alternate_target_group_arn = var.api_alternate_target_group_arn
+      production_listener_rule   = var.api_listener_rule_arn
+      role_arn                   = var.ecs_infrastructure_role_arn
+    }
+  }
+
+  deployment_configuration {
+    strategy             = "CANARY"
+    bake_time_in_minutes = var.canary_final_bake_minutes
+
+    canary_configuration {
+      canary_percent              = var.canary_percent
+      canary_bake_time_in_minutes = var.canary_bake_minutes
+    }
+  }
+
+  alarms {
+    enable      = true
+    rollback    = true
+    alarm_names = [var.api_5xx_alarm_name]
+  }
+
+  deployment_circuit_breaker {
+    enable   = true
+    rollback = true
+  }
+}
+
 resource "aws_ecs_service" "service" {
-  for_each                           = local.services
+  for_each                           = { for name, service in local.services : name => service if name != "api" }
   name                               = "${var.project_name}-${each.key}"
   cluster                            = aws_ecs_cluster.cluster.id
   task_definition                    = aws_ecs_task_definition.task_definition[each.key].arn
