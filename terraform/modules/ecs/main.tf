@@ -8,6 +8,7 @@ locals {
         { name = "SQS_QUEUE_URL", value = var.queue_url },
         { name = "BASE_URL", value = "https://${var.domain_name}" },
         { name = "REDIS_URL", value = var.redis_url },
+        { name = "FORWARDED_ALLOW_IPS", value = join(",", var.trusted_proxy_cidrs) },
       ]
     }
     worker = {

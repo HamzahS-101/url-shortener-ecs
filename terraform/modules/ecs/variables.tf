@@ -28,6 +28,11 @@ variable "redis_url" {
   description = "Redis connection URL for the API cache."
 }
 
+variable "trusted_proxy_cidrs" {
+  type        = list(string)
+  description = "CIDR blocks the API trusts to set X-Forwarded-For (the ALB's subnets)."
+}
+
 variable "task_role_arns" {
   type        = map(string)
   description = "Task role ARNs keyed by service name."

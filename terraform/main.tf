@@ -93,4 +93,5 @@ module "ecs" {
   database_url_secret_arn = module.database.database_url_secret_arn
   queue_url               = module.sqs.queue_url
   redis_url               = module.cache.redis_url
+  trusted_proxy_cidrs     = values(var.public_subnet_cidrs)
 }
