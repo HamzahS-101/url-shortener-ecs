@@ -23,6 +23,11 @@ variable "queue_url" {
   description = "URL of the click events queue."
 }
 
+variable "redis_url" {
+  type        = string
+  description = "Redis connection URL for the API cache."
+}
+
 variable "task_role_arns" {
   type        = map(string)
   description = "Task role ARNs keyed by service name."

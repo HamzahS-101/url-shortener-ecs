@@ -131,6 +131,18 @@ variable "db_instance_class" {
   default     = "db.t4g.micro"
 }
 
+variable "redis_engine_version" {
+  type        = string
+  description = "Redis engine version"
+  default     = "7.1"
+}
+
+variable "redis_node_type" {
+  type        = string
+  description = "ElastiCache node type"
+  default     = "cache.t4g.micro"
+}
+
 variable "db_allocated_storage" {
   type        = number
   description = "Allocated storage in GB"
