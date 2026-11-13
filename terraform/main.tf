@@ -61,14 +61,15 @@ module "cache" {
 module "monitoring" {
   source = "./modules/monitoring"
 
-  project_name                  = var.project_name
-  alert_email                   = var.alert_email
-  alb_arn_suffix                = module.alb.alb_arn_suffix
-  target_group_arn_suffixes     = module.alb.target_group_arn_suffixes
-  dlq_name                      = module.sqs.dlq_name
-  db_instance_id                = module.database.db_instance_id
-  api_5xx_threshold             = var.api_5xx_threshold
-  rds_free_storage_threshold_gb = var.rds_free_storage_threshold_gb
+  project_name                          = var.project_name
+  alert_email                           = var.alert_email
+  alb_arn_suffix                        = module.alb.alb_arn_suffix
+  target_group_arn_suffixes             = module.alb.target_group_arn_suffixes
+  api_alternate_target_group_arn_suffix = module.alb.api_alternate_target_group_arn_suffix
+  dlq_name                              = module.sqs.dlq_name
+  db_instance_id                        = module.database.db_instance_id
+  api_5xx_threshold                     = var.api_5xx_threshold
+  rds_free_storage_threshold_gb         = var.rds_free_storage_threshold_gb
 }
 
 module "sqs" {
@@ -111,7 +112,7 @@ module "ecs" {
   api_alternate_target_group_arn = module.alb.api_alternate_target_group_arn
   api_listener_rule_arn          = module.alb.api_listener_rule_arn
   ecs_infrastructure_role_arn    = module.iam.ecs_infrastructure_role_arn
-  api_5xx_alarm_name             = module.monitoring.api_5xx_alarm_name
+  api_5xx_alarm_names            = module.monitoring.api_5xx_alarm_names
   canary_percent                 = var.canary_percent
   canary_bake_minutes            = var.canary_bake_minutes
   canary_final_bake_minutes      = var.canary_final_bake_minutes

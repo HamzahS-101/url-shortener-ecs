@@ -32,6 +32,26 @@ resource "aws_cloudwatch_metric_alarm" "api_5xx" {
   }
 }
 
+resource "aws_cloudwatch_metric_alarm" "api_5xx_alternate" {
+  alarm_name          = "${var.project_name}-api-alt-5xx"
+  alarm_description   = "API targets in the alternate target group returned more than ${var.api_5xx_threshold} 5xx responses in a minute"
+  namespace           = "AWS/ApplicationELB"
+  metric_name         = "HTTPCode_Target_5XX_Count"
+  statistic           = "Sum"
+  period              = 60
+  evaluation_periods  = 1
+  comparison_operator = "GreaterThanThreshold"
+  threshold           = var.api_5xx_threshold
+  treat_missing_data  = "notBreaching"
+  alarm_actions       = [aws_sns_topic.alerts.arn]
+  ok_actions          = [aws_sns_topic.alerts.arn]
+
+  dimensions = {
+    LoadBalancer = var.alb_arn_suffix
+    TargetGroup  = var.api_alternate_target_group_arn_suffix
+  }
+}
+
 resource "aws_cloudwatch_metric_alarm" "unhealthy_hosts" {
   for_each            = var.target_group_arn_suffixes
   alarm_name          = "${var.project_name}-${each.key}-unhealthy-hosts"
@@ -50,6 +70,26 @@ resource "aws_cloudwatch_metric_alarm" "unhealthy_hosts" {
   dimensions = {
     LoadBalancer = var.alb_arn_suffix
     TargetGroup  = each.value
+  }
+}
+
+resource "aws_cloudwatch_metric_alarm" "api_alternate_unhealthy_hosts" {
+  alarm_name          = "${var.project_name}-api-alt-unhealthy-hosts"
+  alarm_description   = "One or more API targets in the alternate target group are failing ALB health checks"
+  namespace           = "AWS/ApplicationELB"
+  metric_name         = "UnHealthyHostCount"
+  statistic           = "Maximum"
+  period              = 60
+  evaluation_periods  = 2
+  comparison_operator = "GreaterThanThreshold"
+  threshold           = 0
+  treat_missing_data  = "notBreaching"
+  alarm_actions       = [aws_sns_topic.alerts.arn]
+  ok_actions          = [aws_sns_topic.alerts.arn]
+
+  dimensions = {
+    LoadBalancer = var.alb_arn_suffix
+    TargetGroup  = var.api_alternate_target_group_arn_suffix
   }
 }
 

@@ -135,7 +135,7 @@ resource "aws_ecs_service" "api" {
   alarms {
     enable      = true
     rollback    = true
-    alarm_names = [var.api_5xx_alarm_name]
+    alarm_names = var.api_5xx_alarm_names
   }
 
   deployment_circuit_breaker {

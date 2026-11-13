@@ -98,9 +98,9 @@ variable "ecs_infrastructure_role_arn" {
   description = "ARN of the role ECS uses to shift ALB traffic during canary deployments."
 }
 
-variable "api_5xx_alarm_name" {
-  type        = string
-  description = "Name of the alarm that rolls back an API deployment."
+variable "api_5xx_alarm_names" {
+  type        = list(string)
+  description = "Names of the alarms that roll back an API deployment."
 }
 
 variable "canary_percent" {
