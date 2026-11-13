@@ -231,7 +231,7 @@
           <input id="url" name="url" type="url" required
                  placeholder="https://example.com/a/very/long/path"
                  aria-describedby="url-error" autocomplete="off">
-          <button id="submit" type="submit">Shorten</button>
+          <button id="submit" type="submit">Shrink it</button>
         </div>
         <p id="url-error" class="error" role="alert"></p>
       </form>
@@ -371,7 +371,7 @@
 
       const url = input.value.trim();
       submit.disabled = true;
-      submit.textContent = "Shortening";
+      submit.textContent = "Shrinking";
       result.hidden = true;
       result.classList.remove("show");
       stage.hidden = false;
@@ -409,7 +409,7 @@
         error.textContent = "Something went wrong. Try again in a moment.";
       } finally {
         submit.disabled = false;
-        submit.textContent = "Shorten";
+        submit.textContent = "Shrink it";
       }
     });
 
