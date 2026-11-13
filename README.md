@@ -70,6 +70,8 @@ Three services (API, worker, dashboard) run on ECS Fargate behind an Application
 
 ## Architecture
 
+![Architecture](docs/images/architecture.png)
+
 | Service | Language | What it does |
 |---------|----------|--------------|
 | **api** | Python (FastAPI) | `POST /shorten` saves the link to Postgres. `GET /{code}` checks Redis, then Postgres on a miss, sends a click event to SQS and redirects. Serves the shortener page at `/`. |
