@@ -20,8 +20,8 @@ variable "project_name" {
 
 variable "environment" {
   type        = string
-  description = "Environment name used in tags (e.g., dev)."
-  default     = "dev"
+  description = "Environment name used in tags (e.g., prod)."
+  default     = "prod"
 }
 
 variable "owner" {
