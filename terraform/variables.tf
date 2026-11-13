@@ -170,7 +170,7 @@ variable "alert_email" {
 variable "api_5xx_threshold" {
   type        = number
   description = "API 5xx responses per minute above which the alarm fires"
-  default     = 5
+  default     = 0
 }
 
 variable "rds_free_storage_threshold_gb" {
