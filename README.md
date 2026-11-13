@@ -13,6 +13,7 @@ Three services (API, worker, dashboard) run on ECS Fargate behind an Application
 - [Key components](#key-components)
 - [Deployment workflow](#deployment-workflow)
 - [Decisions and trade-offs](#decisions-and-trade-offs)
+- [Build practices](#build-practices)
 - [Proof it works](#proof-it-works)
 - [Troubleshooting](#troubleshooting)
 - [Security practices](#security-practices)
@@ -137,23 +138,32 @@ The API uses ECS's native canary deployment, not CodeDeploy. ECS shifts traffic 
 3. The other 90% moves over. The old tasks are kept for another 5 minutes.
 4. The old tasks are stopped.
 
+**A canary deployment in progress, with 10% of traffic on the new tasks:**
+
+![Canary deployment timeline](docs/images/canary-deployment-timeline.png)
+
+**The listener rule after the canary, with all traffic moved to the alternate target group:**
+
+![Listener rule after the canary](docs/images/canary-listener-rule-100.png)
+
 If either API 5xx alarm fires, ECS moves all traffic back to the old tasks. If new tasks fail to start or fail health checks, the circuit breaker rolls back.
 
+<a name="alarm-rollback"></a>
 **ECS rolling back a deployment because a 5xx alarm was active:**
 
 ![Rollback because of an active alarm](docs/images/ecs-rollback-alarm.png)
 
-![Canary deployment timeline](docs/images/canary-deployment-timeline.png)
-
-![Listener rule during the canary](docs/images/canary-listener-rule-90-10.png)
-
 The worker and dashboard use rolling deploys. New tasks start next to the old ones, and old tasks only stop once the new ones are healthy. The circuit breaker rolls back a failed deploy.
 
-**Before and after a canary deploy that renamed the button:**
+**Before and after a canary deploy.** The only change was the button text, from **Shorten** to **Shrink it**.
 
-| Before | After |
-|--------|-------|
-| ![Before](docs/images/canary-before.png) | ![After](docs/images/canary-after.png) |
+Before:
+
+![Before the canary deploy](docs/images/canary-before.png)
+
+After:
+
+![After the canary deploy](docs/images/canary-after.png)
 
 **Timing:** images are pushed about 4 minutes after the merge. After approval, the canary gets 10% of traffic within about 2 minutes, and the deploy finishes about 12 minutes later.
 
@@ -209,9 +219,32 @@ The state bucket, ECR repositories, Route 53 hosted zone, image tag parameters a
 
 Each service runs two tasks across two AZs. RDS and Redis are single-AZ to save cost. If RDS goes down, cached links still redirect, new links can't be created, and clicks wait in the queue.
 
-### Small, non-root images
+## Build practices
 
-The API runs on `python:3.14-slim`, the worker on `busybox` (it needs `wget` for its health check) and the dashboard on `distroless`, which has no shell. All three run as non-root.
+### Docker images
+
+| Image | Final base | Size |
+|-------|------------|------|
+| api | `python:3.14-slim` | 322 MB |
+| worker | `busybox` | 30 MB |
+| dashboard | `distroless` | 23 MB |
+
+- **Multi-stage builds:** dependencies are installed or compiled in a build stage, and the final image only gets the result.
+- **Static Go binaries:** the worker and dashboard are compiled with `CGO_ENABLED=0`, so the final image needs no Go toolchain or C libraries. The dashboard runs on `distroless`, which has no shell at all.
+- **Layer caching:** dependency files (`go.mod`, `go.sum`, `requirements.txt`) are copied and installed before the source code, so a code change doesn't reinstall dependencies.
+- **Only what's needed:** each Dockerfile copies specific files rather than the whole folder, with a `.dockerignore` as well.
+- **Smaller API image:** pip runs with `--no-cache-dir`, and pip itself is removed from the final image.
+- **Non-root:** all three run as user `10001`.
+
+The API is the largest because it carries the Python runtime, while the Go services are single compiled binaries.
+
+### Terraform
+
+- **Modules:** nine modules, each with its own `main.tf`, `variables.tf` and `outputs.tf`. The root `main.tf` connects them by passing one module's outputs into another.
+- **No hardcoded values in modules:** every value comes in as a variable, with defaults set once in the root `variables.tf`.
+- **Maps and `for_each` instead of repeated blocks:** maps in `locals` describe what to create, and one resource block loops over them. The security groups are 7 groups and 23 rules from 3 resource blocks. The 5 interface endpoints come from one block, and one map of services drives the target groups, listener rules, task definitions and log groups.
+- **Tagging:** `default_tags` on the provider tags every resource with the project, environment, owner and `ManagedBy = terraform`.
+- **State and versions:** remote state in S3 with locking, and pinned Terraform and provider versions.
 
 ## Proof it works
 
@@ -247,9 +280,13 @@ The API runs on `python:3.14-slim`, the worker on `busybox` (it needs `wget` for
 
 To test rollback, I deployed a build where every redirect returned a 500 but `/healthz` still passed, so only the 5xx alarm could catch it. The alarm fired about 3 minutes after the first error. The canary bake times were 2 and 1 minutes, so ECS finished the deployment 5 seconds before the alarm fired. Nothing rolled back.
 
-**Fix:** bake times must be longer than the time an alarm takes to fire. Both are now 5 minutes. A later deployment showed the rollback working: the alarm fired during the bake and ECS rolled back (screenshot in [Deployment workflow](#deployment-workflow)).
+**Fix:** bake times must be longer than the time an alarm takes to fire. Both are now 5 minutes. A later deployment showed the rollback working: the alarm fired during the bake and ECS rolled back ([see the rollback](#alarm-rollback)).
+
+**The API 5xx alarm in ALARM state:**
 
 ![Alarm in ALARM state](docs/images/alarm-api-5xx.png)
+
+**The SNS email notification sent when the alarm fired:**
 
 ![Alarm email](docs/images/sns-alarm-email.png)
 
