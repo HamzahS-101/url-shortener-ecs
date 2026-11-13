@@ -43,7 +43,6 @@ def stats(short_id: str):
 
 @app.get("/{short_id}")
 def resolve(short_id: str, request: Request):
-    raise HTTPException(500, "broken build for the canary rollback demo")
     url = get_cached_url(short_id)
     if url is None:
         item = get_mapping(short_id)
