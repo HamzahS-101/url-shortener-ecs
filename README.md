@@ -20,7 +20,7 @@ Three services (API, worker, dashboard) run on ECS Fargate behind an Application
 - [Run it locally](#run-it-locally)
 - [Deploy to AWS](#deploy-to-aws)
 - [Teardown](#teardown)
-- [What production would add](#what-production-would-add)
+- [Planned improvements](#planned-improvements)
 
 ## Repo layout
 
@@ -385,7 +385,7 @@ Run the **Terraform destroy** workflow and approve it. It removes everything Ter
 
 The one-time setup from [Deploy to AWS](#deploy-to-aws) stays in place: the state bucket, ECR repositories, hosted zone, SSM image tags and OIDC role. They cost very little to keep. To remove everything, delete those by hand after the destroy.
 
-## What production would add
+## Planned improvements
 
 **Reliability**
 
@@ -395,6 +395,7 @@ The one-time setup from [Deploy to AWS](#deploy-to-aws) stays in place: the stat
 
 **Deployments**
 
+- A check at the end of the apply workflow that waits for the ECS services to be stable and calls `/healthz` through the load balancer, so a run only passes once the services are actually healthy.
 - Longer canary bake times (10 to 30 minutes).
 - Alarms that only watch the canary's own errors, so errors from the old version can't trigger a rollback.
 - Separate environments for dev and production.
