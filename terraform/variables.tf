@@ -187,12 +187,12 @@ variable "canary_percent" {
 
 variable "canary_bake_minutes" {
   type        = number
-  description = "Minutes the canary runs before the rest of the traffic moves over. Short for the demo; production would use 10-30"
-  default     = 2
+  description = "Minutes the canary runs before the rest of the traffic moves over"
+  default     = 5
 }
 
 variable "canary_final_bake_minutes" {
   type        = number
-  description = "Minutes the old API version is kept after all traffic has moved. Short for the demo; production would use 15-60"
-  default     = 1
+  description = "Minutes the old API version is kept after all traffic has moved"
+  default     = 5
 }
