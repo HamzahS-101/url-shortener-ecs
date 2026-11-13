@@ -1,6 +1,6 @@
-output "api_5xx_alarm_name" {
-  value       = aws_cloudwatch_metric_alarm.api_5xx.alarm_name
-  description = "Name of the API 5xx alarm, used to roll back canary deployments."
+output "api_5xx_alarm_names" {
+  value       = [aws_cloudwatch_metric_alarm.api_5xx.alarm_name, aws_cloudwatch_metric_alarm.api_5xx_alternate.alarm_name]
+  description = "Names of the API 5xx alarms for both target groups, used to roll back canary deployments."
 }
 
 output "sns_topic_arn" {

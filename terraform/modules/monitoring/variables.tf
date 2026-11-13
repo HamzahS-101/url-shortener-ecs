@@ -38,3 +38,8 @@ variable "rds_free_storage_threshold_gb" {
   type        = number
   description = "RDS free storage in GB below which the alarm fires."
 }
+
+variable "api_alternate_target_group_arn_suffix" {
+  type        = string
+  description = "ARN suffix of the API's alternate target group."
+}

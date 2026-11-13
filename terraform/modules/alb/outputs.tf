@@ -43,3 +43,8 @@ output "api_listener_rule_arn" {
   value       = aws_lb_listener_rule.host_rule["api"].arn
   description = "ARN of the API's production listener rule, which ECS updates during canary deployments."
 }
+
+output "api_alternate_target_group_arn_suffix" {
+  value       = aws_lb_target_group.api_alternate.arn_suffix
+  description = "ARN suffix of the API's alternate target group, used as a CloudWatch metric dimension."
+}
