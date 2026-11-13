@@ -236,8 +236,6 @@ Each service runs two tasks across two AZs. RDS and Redis are single-AZ to save 
 - **Smaller API image:** pip runs with `--no-cache-dir`, and pip itself is removed from the final image.
 - **Non-root:** all three run as user `10001`.
 
-The API is the largest because it carries the Python runtime, while the Go services are single compiled binaries.
-
 ### Terraform
 
 - **Modules:** nine modules, each with its own `main.tf`, `variables.tf` and `outputs.tf`. The root `main.tf` connects them by passing one module's outputs into another.
