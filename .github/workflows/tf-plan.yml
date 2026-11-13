@@ -1,0 +1,92 @@
+name: Terraform plan
+
+on:
+  pull_request:
+    paths:
+      - "terraform/**"
+      - ".github/workflows/tf-plan.yml"
+  push:
+    branches: [main]
+    paths:
+      - "terraform/**"
+      - ".github/workflows/tf-plan.yml"
+  workflow_run:
+    workflows: ["Docker build, scan and push to ECR"]
+    types: [completed]
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  id-token: write
+  pull-requests: write
+
+concurrency:
+  group: tf-plan-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  AWS_REGION: eu-west-2
+  AWS_ROLE_ARN: arn:aws:iam::188735374190:role/url-shortener-github-actions
+  TF_VAR_alert_email: ${{ secrets.ALERT_EMAIL }}
+
+defaults:
+  run:
+    working-directory: terraform
+
+jobs:
+  plan:
+    name: Lint, scan and plan
+    if: github.event_name != 'workflow_run' || github.event.workflow_run.conclusion == 'success'
+    runs-on: ubuntu-24.04-arm
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7.0.1
+
+      - name: Set up Terraform
+        uses: hashicorp/setup-terraform@v4.0.1
+        with:
+          terraform_version: 1.17.1
+
+      - name: Check formatting
+        run: terraform fmt -check -recursive
+
+      - name: Set up TFLint
+        uses: terraform-linters/setup-tflint@v6.3.2
+        with:
+          tflint_version: v0.66.0
+
+      - name: Run TFLint
+        run: tflint --recursive -f compact
+
+      - name: Run Checkov
+        uses: bridgecrewio/checkov-action@v12.3141.0
+        with:
+          directory: terraform
+          framework: terraform
+          soft_fail: true
+          output_format: cli,github_failed_only
+          output_file_path: console,checkov-results.md
+
+      - name: Comment Checkov results on the PR
+        if: github.event_name == 'pull_request'
+        uses: marocchino/sticky-pull-request-comment@v3.0.5
+        with:
+          header: checkov
+          path: checkov-results.md
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v6.3.0
+        with:
+          role-to-assume: ${{ env.AWS_ROLE_ARN }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Terraform init
+        run: terraform init -input=false
+
+      - name: Terraform validate
+        run: terraform validate
+
+      - name: Terraform plan
+        run: terraform plan -input=false -lock-timeout=10m
