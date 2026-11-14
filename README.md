@@ -6,10 +6,29 @@ Three services (API, worker, dashboard) run on ECS Fargate behind an Application
 
 ![Shortening a link](docs/images/shrink-animation.gif)
 
+## Architecture
+
+![Architecture](docs/images/architecture.png)
+
+| Service | Language | What it does |
+|---------|----------|--------------|
+| **api** | Python (FastAPI) | `POST /shorten` saves the link to Postgres. `GET /{code}` checks Redis, then Postgres on a miss, sends a click event to SQS and redirects. Serves the shortener page at `/`. |
+| **worker** | Go | Reads click events from SQS and saves each click to Postgres in one transaction. Failed messages go to a dead-letter queue after 5 attempts. |
+| **dashboard** | Go | Shows totals, most-clicked links, recent clicks and an hourly chart per link, read from Postgres. |
+
+**Request path:** Route 53 → ALB (HTTPS, with HTTP redirected) → WAF, attached to the ALB, checks the request → listener rules route by hostname. `url.hamzahsahal.com` goes to the API, `dashboard.url.hamzahsahal.com` to the dashboard, and anything else gets a 404.
+
+**Network:** one VPC across two Availability Zones in eu-west-2, with three subnet tiers.
+
+- **Public:** the ALB only.
+- **App:** the ECS tasks (no public IPs) and the VPC endpoints.
+- **Data:** RDS and Redis.
+
+There is no NAT gateway. Tasks reach AWS through interface endpoints (ECR, CloudWatch Logs, SQS, Secrets Manager) and a free S3 gateway endpoint for image layers. SQS is a regional service outside the VPC, reached through its endpoint.
+
 ## Contents
 
 - [Repo layout](#repo-layout)
-- [Architecture](#architecture)
 - [Key components](#key-components)
 - [Deployment workflow](#deployment-workflow)
 - [Decisions and trade-offs](#decisions-and-trade-offs)
@@ -67,26 +86,6 @@ Three services (API, worker, dashboard) run on ECS Fargate behind an Application
 ├── elasticmq.conf
 └── .pre-commit-config.yaml
 ```
-
-## Architecture
-
-![Architecture](docs/images/architecture.png)
-
-| Service | Language | What it does |
-|---------|----------|--------------|
-| **api** | Python (FastAPI) | `POST /shorten` saves the link to Postgres. `GET /{code}` checks Redis, then Postgres on a miss, sends a click event to SQS and redirects. Serves the shortener page at `/`. |
-| **worker** | Go | Reads click events from SQS and saves each click to Postgres in one transaction. Failed messages go to a dead-letter queue after 5 attempts. |
-| **dashboard** | Go | Shows totals, most-clicked links, recent clicks and an hourly chart per link, read from Postgres. |
-
-**Request path:** Route 53 → ALB (HTTPS, with HTTP redirected) → WAF, attached to the ALB, checks the request → listener rules route by hostname. `url.hamzahsahal.com` goes to the API, `dashboard.url.hamzahsahal.com` to the dashboard, and anything else gets a 404.
-
-**Network:** one VPC across two Availability Zones in eu-west-2, with three subnet tiers.
-
-- **Public:** the ALB only.
-- **App:** the ECS tasks (no public IPs) and the VPC endpoints.
-- **Data:** RDS and Redis.
-
-There is no NAT gateway. Tasks reach AWS through interface endpoints (ECR, CloudWatch Logs, SQS, Secrets Manager) and a free S3 gateway endpoint for image layers. SQS is a regional service outside the VPC, reached through its endpoint.
 
 ## Key components
 
