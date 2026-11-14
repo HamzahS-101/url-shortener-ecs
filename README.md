@@ -191,7 +191,7 @@ On a redirect the API checks Redis first. On a miss it reads Postgres and caches
 
 Tasks have no internet route. They reach ECR, CloudWatch Logs, Secrets Manager and SQS through interface endpoints, and S3 through a free gateway endpoint. A compromised container can't call out to the internet.
 
-Trade-off: five interface endpoints in two AZs cost more per hour than a single NAT gateway.
+Trade-off: tasks can't reach anything outside AWS. A third-party API would need a NAT gateway.
 
 ### ARM64 everywhere
 
@@ -205,7 +205,7 @@ After a successful push, the Docker workflow writes the SHA to SSM and Terraform
 
 ### Canary for the API, rolling for the others
 
-The API handles all user traffic, so it gets the canary: a bad version only reaches 10% of requests before an alarm stops it. The worker has no load balancer, so it can't use a canary. The dashboard has few users, so a rolling deploy is enough.
+The API handles all user traffic, so it gets the canary: a bad version only reaches 10% of requests before an alarm stops it. The worker pulls messages from SQS instead of receiving requests, so there's no traffic for a canary to shift. The dashboard has few users, so a rolling deploy is enough.
 
 ### Database credentials in Secrets Manager
 
