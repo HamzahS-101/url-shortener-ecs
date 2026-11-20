@@ -54,7 +54,6 @@ def resolve(short_id: str, request: Request):
     # Publish click event to SQS for analytics processing
     publish_click_event(
         short_code=short_id,
-        ip=request.client.host if request.client else "unknown",
         user_agent=request.headers.get("user-agent", ""),
         referer=request.headers.get("referer", ""),
     )

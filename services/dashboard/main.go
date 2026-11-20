@@ -135,7 +135,7 @@ func handleURLStats(w http.ResponseWriter, r *http.Request) {
 
 func handleRecent(w http.ResponseWriter, r *http.Request) {
 	rows, err := db.Query(
-		`SELECT short_code, ip_address, user_agent, clicked_at
+		`SELECT short_code, user_agent, clicked_at
 		 FROM click_events ORDER BY clicked_at DESC LIMIT 50`,
 	)
 	if err != nil {
@@ -146,7 +146,6 @@ func handleRecent(w http.ResponseWriter, r *http.Request) {
 
 	type Click struct {
 		ShortCode string `json:"short_code"`
-		IP        string `json:"ip"`
 		UserAgent string `json:"user_agent"`
 		ClickedAt string `json:"clicked_at"`
 	}
@@ -154,7 +153,7 @@ func handleRecent(w http.ResponseWriter, r *http.Request) {
 	clicks := []Click{}
 	for rows.Next() {
 		var c Click
-		rows.Scan(&c.ShortCode, &c.IP, &c.UserAgent, &c.ClickedAt)
+		rows.Scan(&c.ShortCode, &c.UserAgent, &c.ClickedAt)
 		clicks = append(clicks, c)
 	}
 

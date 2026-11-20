@@ -28,10 +28,9 @@ def _get_sqs():
     return _sqs_client
 
 
-def publish_click_event(short_code: str, ip: str, user_agent: str, referer: str):
+def publish_click_event(short_code: str, user_agent: str, referer: str):
     event = {
         "short_code": short_code,
-        "ip": ip,
         "user_agent": user_agent,
         "referer": referer,
         "timestamp": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()),

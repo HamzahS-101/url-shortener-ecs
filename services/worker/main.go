@@ -23,7 +23,6 @@ var sqsClient *sqs.Client
 
 type ClickEvent struct {
 	ShortCode string `json:"short_code"`
-	IP        string `json:"ip"`
 	UserAgent string `json:"user_agent"`
 	Referer   string `json:"referer"`
 	Timestamp string `json:"timestamp"`
@@ -99,7 +98,6 @@ func migrate() {
 		`CREATE TABLE IF NOT EXISTS click_events (
 			id SERIAL PRIMARY KEY,
 			short_code VARCHAR(16) NOT NULL,
-			ip_address VARCHAR(45),
 			user_agent TEXT,
 			referer TEXT,
 			clicked_at TIMESTAMP NOT NULL,
@@ -111,7 +109,6 @@ func migrate() {
 			short_code VARCHAR(16) NOT NULL,
 			hour TIMESTAMP NOT NULL,
 			clicks INTEGER DEFAULT 0,
-			unique_ips INTEGER DEFAULT 0,
 			PRIMARY KEY (short_code, hour)
 		)`,
 	}
@@ -200,9 +197,9 @@ func processClickEvent(raw string) error {
 
 	// Insert raw click event
 	_, err = tx.Exec(
-		`INSERT INTO click_events (short_code, ip_address, user_agent, referer, clicked_at)
-		 VALUES ($1, $2, $3, $4, $5)`,
-		event.ShortCode, event.IP, event.UserAgent, event.Referer, clickedAt,
+		`INSERT INTO click_events (short_code, user_agent, referer, clicked_at)
+		 VALUES ($1, $2, $3, $4)`,
+		event.ShortCode, event.UserAgent, event.Referer, clickedAt,
 	)
 	if err != nil {
 		return err
@@ -211,8 +208,8 @@ func processClickEvent(raw string) error {
 	// Update hourly aggregation
 	hour := clickedAt.Truncate(time.Hour)
 	_, err = tx.Exec(
-		`INSERT INTO click_stats_hourly (short_code, hour, clicks, unique_ips)
-		 VALUES ($1, $2, 1, 1)
+		`INSERT INTO click_stats_hourly (short_code, hour, clicks)
+		 VALUES ($1, $2, 1)
 		 ON CONFLICT (short_code, hour)
 		 DO UPDATE SET clicks = click_stats_hourly.clicks + 1`,
 		event.ShortCode, hour,

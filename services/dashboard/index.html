@@ -332,7 +332,7 @@
       <h2>Recent clicks</h2>
       <div class="table-wrap">
         <table>
-          <thead><tr><th>Time (UTC)</th><th>Code</th><th>IP</th><th>Browser</th></tr></thead>
+          <thead><tr><th>Time (UTC)</th><th>Code</th><th>Browser</th></tr></thead>
           <tbody id="recent"></tbody>
         </table>
       </div>
@@ -592,7 +592,7 @@
 
         fill("recent", recent.map((c) => {
           const tr = document.createElement("tr");
-          tr.append(cell(formatTime(c.clicked_at), "time"), codeCell(c.short_code), cell(c.ip), cell(c.user_agent, "agent"));
+          tr.append(cell(formatTime(c.clicked_at), "time"), codeCell(c.short_code), cell(c.user_agent, "agent"));
           tr.lastChild.title = c.user_agent;
           return tr;
         }), 4, "No clicks yet. Open a short link to record one.");
